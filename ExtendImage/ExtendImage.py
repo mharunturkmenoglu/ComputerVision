@@ -42,24 +42,31 @@ class ExtendImage:
 
     def fourhorizontal(self):
         """ Method for displaying four images on quadro monitor that aligned four horizontal"""
+        timerStart = time.time()
         cv2.namedWindow("window1", cv2.WND_PROP_FULLSCREEN)
         cv2.setWindowProperty("window1",cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
-        cv2.imshow("window1", self.img1)
 
         cv2.namedWindow("window2", cv2.WND_PROP_FULLSCREEN)
         cv2.setWindowProperty("window2",cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
-        cv2.imshow("window2", self.img2)
         cv2.moveWindow("window2", 1920, 0)
 
         cv2.namedWindow("window3", cv2.WND_PROP_FULLSCREEN)
         cv2.setWindowProperty("window3",cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
-        cv2.imshow("window3", self.img3)
         cv2.moveWindow("window3", 3840, 0)
 
         cv2.namedWindow("window4", cv2.WND_PROP_FULLSCREEN)
         cv2.setWindowProperty("window4",cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
-        cv2.imshow("window4", self.img4)
         cv2.moveWindow("window4", 5760, 0)
+
+        cv2.imshow("window1", self.img1)
+        cv2.imshow("window2", self.img2)
+        cv2.imshow("window3", self.img3)
+        cv2.imshow("window4", self.img4)
+
+        timerEnd = time.time()
+        executionTime = timerEnd - timerStart
+        print(executionTime)
+
         cv2.waitKey(0)
 
     def twohorizontal(self):
