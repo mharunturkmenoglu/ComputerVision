@@ -6,14 +6,81 @@ import cv2
 
 
 
-def createDummyWorldPixelMatrix(img):
+def createDummyPixelAreaMatrix(img):
     height, width, channel = img.shape
     dummy_array = random.random_sample((height, width))
 
     return dummy_array
 
+def getLenghtOfPointDistance(points, area_matrix):
+
+    x = points[:,0]
+    y = points[:,1]
+
+    min_x = np.argmin(x)
+    max_x = np.argmax(x)
+
+    min_y = np.argmin(y)
+    max_y = np.argmax(y)
+
+    # print('min_x:', min_x)
+    # print(x[min_x])
+    # print('max_x:', max_x)
+    # print(x[max_x])
+    # print('min_y:', min_y)
+    # print(y[min_y])
+    # print('max_y:', max_y)
+    # print(y[max_y])
+
+    array = []
+    f = getPolynomialFitFunction(points)
+    for i in range(0, len(x), 4):
+        y_val = int(f(x[i]))
+        #print('x:',x[i])
+        #print('y:',y_val)
+        array.append([y_val, x[i]])
+    
+    print(array)
+
+    lenght = 0.0
+    for i in range(0, len(array) - 1):
+        coord = array[i]
+        coord2 = array[i+1]
+        x_lenght = 0.0
+        y_lenght = 0.0
+
+        for x in range(coord[0], coord2[0]):
+            pass
+
+        for y in range(coord[1], coord2[1]):
+            pass
+
+
+
+
+    img2 = cv2.imread('LenghtCalculation/samples/deneme2.png')
+    img2 = img2[485:516, 3383:3440]
+
+    array = np.array(array)
+    array = array.sort()
+    ret,cropped_image = cv2.threshold(img2,127,255,cv2.THRESH_BINARY)
+    combined_image2 = cv2.polylines(img2, [array], False, (0,0,255))
+    cv2.imshow('temp image', combined_image2)
+    cv2.waitKey(0)
+        
+    
+
+
+
+    
+
+
+    
+
+        
+
 def getLenght(img):
-    area_matrix = createDummyWorldPixelMatrix(img)
+    area_matrix = createDummyPixelAreaMatrix(img)
 
     cv2.imshow('image', img)
     cv2.waitKey(0)
@@ -42,7 +109,7 @@ def getLenght(img):
         lenght += math.sqrt(area_matrix[x][y])
 
     print(lenght)
-    
+    getLenghtOfPointDistance(coords, area_matrix)
     
     mooved_coords = moveThinned(img, thinned_image)
 
@@ -51,9 +118,6 @@ def getLenght(img):
     cv2.imshow('combined image', combined_image)
     cv2.waitKey(0)
     
-
-
-
 def getPolynomialFitFunction(points):
     # get x and y vectors
     x = points[:,0]
