@@ -134,7 +134,7 @@ def moveThinned(img, thinned_img):
 
 
 def main():
-    img = cv2.imread('ahmet2.png')
+    img = cv2.imread('LenghtCalculation/samples/deneme2.png')
     img = img[485:516, 3383:3440]
     ret,cropped_image = cv2.threshold(img,127,255,cv2.THRESH_BINARY)
 
