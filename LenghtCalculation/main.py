@@ -1,10 +1,9 @@
+from unittest import result
 import matplotlib.pyplot as plt
 from numpy import random
 import numpy as np
 import math 
 import cv2
-
-
 
 def createDummyPixelAreaMatrix(img):
     height, width, channel = img.shape
@@ -13,7 +12,6 @@ def createDummyPixelAreaMatrix(img):
     return dummy_array
 
 def getLenghtOfPointDistance(points, area_matrix):
-
     x = points[:,0]
     y = points[:,1]
 
@@ -23,25 +21,14 @@ def getLenghtOfPointDistance(points, area_matrix):
     min_y = np.argmin(y)
     max_y = np.argmax(y)
 
-    # print('min_x:', min_x)
-    # print(x[min_x])
-    # print('max_x:', max_x)
-    # print(x[max_x])
-    # print('min_y:', min_y)
-    # print(y[min_y])
-    # print('max_y:', max_y)
-    # print(y[max_y])
-
     array = []
     f = getPolynomialFitFunction(points)
-    for i in range(0, len(x), 4):
+    for i in range(0, len(x), 1):
         y_val = int(f(x[i]))
         #print('x:',x[i])
         #print('y:',y_val)
         array.append([y_val, x[i]])
     
-    print(array)
-
     lenght = 0.0
     for i in range(0, len(array) - 1):
         coord = array[i]
@@ -55,29 +42,66 @@ def getLenghtOfPointDistance(points, area_matrix):
         for y in range(coord[1], coord2[1]):
             pass
 
-
-
-
     img2 = cv2.imread('LenghtCalculation/samples/deneme2.png')
     img2 = img2[485:516, 3383:3440]
 
     array = np.array(array)
-    array = array.sort()
-    ret,cropped_image = cv2.threshold(img2,127,255,cv2.THRESH_BINARY)
+    #array = array.sort()
+    #ret,img2 = cv2.threshold(img2,127,255,cv2.THRESH_BINARY)
     combined_image2 = cv2.polylines(img2, [array], False, (0,0,255))
     cv2.imshow('temp image', combined_image2)
     cv2.waitKey(0)
         
+
+def getLenghtPointbyPoint(points, area_matrix):
+    x = points[:,0]
+    y = points[:,1]
+
+    min_x = np.argmin(x)
+    max_x = np.argmax(x)
+    min_y = np.argmin(y)
+    max_y = np.argmax(y)
+
+    reverse_points = []
+    for i in range(0, len(x)):
+        reverse_points.append([y[i], x[i]])
+    reverse_points = np.array(reverse_points)
+
+    f = getPolynomialFitFunction(points)
+    f_reverse = getPolynomialFitFunction(reverse_points)
+
+    reverse_result = []
+    for i in range(y[max_y], y[min_y]-1, -1):
+        reverse_result.append([f_reverse(i), i])
+    reverse_result = np.array(reverse_result)
     
+    result = []
+    for i in range(x[min_x], x[max_x]+1, 1):
+        result.append([i, f(i)])
+    result = np.array(result)
 
+    final_array = np.concatenate((result, reverse_result), axis = 0)
+    print('before sort')
+    print(final_array)
+    final_array = final_array[final_array[:, 0].argsort()]
 
+    print('after sort')
+    print(final_array)
 
-    
+    lenght = 0.0
+    for i in range(0, len(final_array)-1):
+        coord = final_array[i]
+        coord2 = final_array[i+1]
 
-
-    
-
+        lenght += math.sqrt(
+            math.pow(abs(coord[0] - coord2[0]), 2)
+            +
+            math.pow(abs(coord[1] - coord2[1]), 2)
+            )
         
+    print("getLenghtPointbyPoint:", lenght)
+    print("worst lenght:", len(points) * math.sqrt(2))
+    
 
 def getLenght(img):
     area_matrix = createDummyPixelAreaMatrix(img)
@@ -90,6 +114,8 @@ def getLenght(img):
     cv2.waitKey(0)
 
     coords = getCoordinates(thinned_image)
+    print("number of coords:", len(coords))
+
     f = getPolynomialFitFunction(coords)
 
     x = coords[:,0]
@@ -108,8 +134,8 @@ def getLenght(img):
 
         lenght += math.sqrt(area_matrix[x][y])
 
-    print(lenght)
-    getLenghtOfPointDistance(coords, area_matrix)
+    #getLenghtOfPointDistance(coords, area_matrix)
+    getLenghtPointbyPoint(coords, area_matrix)
     
     mooved_coords = moveThinned(img, thinned_image)
 
@@ -139,7 +165,6 @@ def getPolynomialFitFunction(points):
 
 def getCoordinates(img):
     coords = np.argwhere(img == 255)
-    #print(coords)
     return coords
 
 def pixelCalculator(img):
@@ -210,5 +235,4 @@ if __name__ == "__main__":
 
 
 # 53 79
-
 # 61 69
