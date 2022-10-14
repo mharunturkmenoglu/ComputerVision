@@ -1,4 +1,3 @@
-from unittest import result
 import matplotlib.pyplot as plt
 from numpy import random
 import numpy as np
@@ -62,17 +61,17 @@ def getLenghtPointbyPoint(points, area_matrix):
     min_y = np.argmin(y)
     max_y = np.argmax(y)
 
-    reverse_points = []
+    inverse_points = []
     for i in range(0, len(x)):
-        reverse_points.append([y[i], x[i]])
-    reverse_points = np.array(reverse_points)
+        inverse_points.append([y[i], x[i]])
+    inverse_points = np.array(inverse_points)
 
     f = getPolynomialFitFunction(points)
-    f_reverse = getPolynomialFitFunction(reverse_points)
+    f_inverse = getPolynomialFitFunction(inverse_points)
 
     reverse_result = []
     for i in range(y[max_y], y[min_y]-1, -1):
-        reverse_result.append([f_reverse(i), i])
+        reverse_result.append([f_inverse(i), i])
     reverse_result = np.array(reverse_result)
     
     result = []
@@ -150,11 +149,11 @@ def getPolynomialFitFunction(points):
     y = points[:,1]
 
     # calculate polynomial
-    z = np.polyfit(x, y, 3)
+    z = np.polyfit(x, y, 10)
     f = np.poly1d(z)
 
     # calculate new x's and y'sq
-    x_new = np.linspace(x[0], x[-1], 50)
+    x_new = np.linspace(x[0], x[-1], 3)
     y_new = f(x_new)
 
     plt.plot(x,y,'o', x_new, y_new)
