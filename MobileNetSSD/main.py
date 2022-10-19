@@ -3,14 +3,14 @@ import time
 import numpy as np
 
 
-with open('object_detection_classes_coco.txt', 'r') as f:
+with open('MobileNetSSD/object_detection_classes_coco.txt', 'r') as f:
    class_names = f.read().split('\n')
 
 print(class_names)
  
 colors = np.random.uniform(0, 255, size=(len(class_names), 3))
  
-model = cv2.dnn.readNet(model='ssd_mobilenet_v2_coco_2018_03_29.pb', config='ssd_mobilenet_v2_coco_2018_03_29.pbtxt.txt', framework='TensorFlow')
+model = cv2.dnn.readNet(model='MobileNetSSD/ssd_mobilenet_v2_coco_2018_03_29.pb', config='MobileNetSSD/ssd_mobilenet_v2_coco_2018_03_29.pbtxt.txt', framework='TensorFlow')
 min_confidence_score = 0.6
 
 # cap = cv2.VideoCapture("Footage.mp4")
