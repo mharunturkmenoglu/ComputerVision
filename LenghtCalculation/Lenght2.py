@@ -5,6 +5,11 @@ import numpy as np
 import time
 
 def getDistance(coords):
+    ''' 
+    This functions measures lenght of distance between coords. Coords must be in-order.!
+    :param coords: in-order list of coords.
+    :return: The result of the lenght calculation. Sum of distance between points.
+    '''
     lenght = 0.0
     for i in range(0, len(coords) - 1):
         current_coord = coords[i]
@@ -20,12 +25,24 @@ def getDistance(coords):
     return lenght + 1 
 
 def IsPointInTheArray(arr, point):
+    ''' 
+    This functions checks point is in the array or not. 
+    :param arr: array
+    :param point: point
+    :return: If it is in the array returns True, else returns False.
+    '''
     for coord in arr:
         if coord == point:
             return True
     return False
 
 def deleteCoordInArray(array, coord):
+    ''' 
+    This functions deletes point if point is in the array. 
+    :param arr: array
+    :param point: point
+    :return: array.
+    '''
     for i in range(0, len(array)):
         if coord == array[i]:
             array.remove(coord)
@@ -33,6 +50,11 @@ def deleteCoordInArray(array, coord):
     return array
 
 def getExtremePoints(coords):
+    ''' 
+    This functions finds coords only have one pixel neighbour and returns that coords. 
+    :param coords: array
+    :return: array.
+    '''
     extreme = []
     for coord in coords:
         if len(getNeighboursOfPixel(coords, coord, [], [-1,-1])) == 1:
@@ -40,6 +62,14 @@ def getExtremePoints(coords):
     return extreme
 
 def getNeighboursOfPixel(coords, point, duplicated, exception = None):
+    ''' 
+    This functions finds all neighbours of a pixels (coords) that is not in duplicated array and exception array. 
+    :param coords: array
+    :param point: array
+    :param duplicated: array
+    :param exception: array
+    :return: array of neigbours.
+    '''
     neighbours = []
     arr = []
     x = point[0]
@@ -60,11 +90,16 @@ def getNeighboursOfPixel(coords, point, duplicated, exception = None):
     return neighbours
 
 def getDuplicatedPixels(coords):
+    ''' 
+    This functions finds duplicate pixels or unnecessary pixels in given array. It doesn't broke the chain of pixels.
+    :param coords: array
+    :return: array of duplicated array
+    '''
     duplicated = []
     for coord in coords:
         if IsPointInTheArray(duplicated, coord) == True:
             continue 
-        neighbours = getNeighboursOfPixel(coords, coord, duplicated ,[-1,-1])
+        neighbours = getNeighboursOfPixel(coords, coord, duplicated , [-1,-1])
         if len(neighbours) > 2:
             # print(f'neighbours of {coord}:')
             # print(neighbours)
@@ -96,12 +131,17 @@ def createImageWithCoords(img, coords):
     cv2.waitKey(0)
 
 def getLenght(img):
+    ''' 
+    This functions calculates lenght of given image
+    :param img: image
+    '''
     start = time.time()
     ret,img = cv2.threshold(img,127,255,cv2.THRESH_BINARY)
 
     thinned_image = Lenght.applyThinningAlogirthm(img)
 
     coords = Lenght.getCoordinates(thinned_image)
+    old_coords =coords
     coords = coords.tolist()
     duplicated_coords = getDuplicatedPixels(coords)
 
@@ -114,6 +154,7 @@ def getLenght(img):
 
     coords_inorder = Lenght.getScratchInOrder(thinned_image, extreme_points[1])
 
+    print("min lenght:", len(coords))
     lenght = getDistance(coords_inorder)
     print("lenght:", lenght)
 
@@ -121,7 +162,29 @@ def getLenght(img):
     print("execution time:", end - start)
     createImageWithCoords(img, coords)
 
+    return old_coords, coords
+
 
 img = cv2.imread('LenghtCalculation/samples/snake_sample3.png')
-getLenght(img)
+cv2.imshow('original image', img)
+cv2.waitKey(0)
+
+coords, coords_inorder = getLenght(img)
 Lenght.getLenght(img)
+
+np_img = np.array(img)
+
+
+for i in range(0, len(coords)):
+    coord = coords[i]
+    np_img[coord[0], coord[1]] = (255, 0,0)
+
+cv2.imshow("blue image", np_img)
+cv2.waitKey(0)
+
+for i in range(0, len(coords_inorder)):
+    coord = coords_inorder[i]
+    np_img[coord[0], coord[1]] = (0, 0, 255)
+
+cv2.imshow("red image", np_img)
+cv2.waitKey(0)

@@ -132,7 +132,7 @@ def getLenght(img):
     # cv2.imshow('combined image', combined_image)
     # cv2.waitKey(0)
 
-    scratch = getScratchInOrder(thinned_image, [214,38])
+    # scratch = getScratchInOrder(thinned_image, [214,38])
     
 def getPolynomialFitFunction(points):
     # get x and y vectors
@@ -212,6 +212,12 @@ def moveThinned(img, thinned_img):
     return np.array(edited_coords)
 
 def getScratchInOrder(thinned_image, initial_coord):
+    """
+    This functions start from initial coordinate and makes a chain of pixels array, continues until it reaches the end.
+    :param thinned_image: image
+    :param initial_coord: array
+    :return: array
+    """
     result = []
     result.append(initial_coord)
     current_coord = initial_coord
