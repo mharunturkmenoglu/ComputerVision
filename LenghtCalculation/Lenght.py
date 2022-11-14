@@ -1,263 +1,190 @@
-import matplotlib.pyplot as plt
-from numpy import random
-import numpy as np
-import math 
+import math
+import LenghtCalculation.utilities as utilities 
 import cv2
+import numpy as np
+import time
 
-def createDummyPixelAreaMatrix(img):
-    height, width, channel = img.shape
-    dummy_array = random.random_sample((height, width))
+def getDistance(coords):
+    ''' 
+    This functions measures lenght of distance between coords. Coords must be in-order.!
+    :param coords: in-order list of coords.
+    :return: The result of the lenght calculation. Sum of distance between points.
+    '''
+    lenght = 0.0
+    for i in range(0, len(coords) - 1):
+        current_coord = coords[i]
+        next_coord = coords[i+1]
 
-    return dummy_array
+        if abs(current_coord[0] - next_coord[0]) + abs(current_coord[1] - next_coord[1]) == 2:
+            lenght += math.sqrt(2)
+            # print(f"sqrt for {current_coord}")
+        else:
+            # print(f"1 for {current_coord}")
+            lenght += 1
+
+    return lenght + 1 
 
 def IsPointInTheArray(arr, point):
+    ''' 
+    This functions checks point is in the array or not. 
+    :param arr: array
+    :param point: point
+    :return: If it is in the array returns True, else returns False.
+    '''
     for coord in arr:
         if coord == point:
             return True
     return False
 
-def getLenghtOfPointDistance(points, area_matrix):
-    x = points[:,0]
-    y = points[:,1]
+def deleteCoordInArray(array, coord):
+    ''' 
+    This functions deletes point if point is in the array. 
+    :param arr: array
+    :param point: point
+    :return: array.
+    '''
+    for i in range(0, len(array)):
+        if coord == array[i]:
+            array.remove(coord)
+            return array
+    return array
 
-    min_x = np.argmin(x)
-    max_x = np.argmax(x)
+def getExtremePoints(coords):
+    ''' 
+    This functions finds coords only have one pixel neighbour and returns that coords. 
+    :param coords: array
+    :return: array.
+    '''
+    extreme = []
+    for coord in coords:
+        if len(getNeighboursOfPixel(coords, coord, [], [-1,-1])) == 1:
+            extreme.append(coord)
+    return extreme
 
-    min_y = np.argmin(y)
-    max_y = np.argmax(y)
+def getNeighboursOfPixel(coords, point, duplicated, exception = None):
+    ''' 
+    This functions finds all neighbours of a pixels (coords) that is not in duplicated array and exception array. 
+    :param coords: array
+    :param point: array
+    :param duplicated: array
+    :param exception: array
+    :return: array of neigbours.
+    '''
+    neighbours = []
+    arr = []
+    x = point[0]
+    y = point[1]
 
-    array = []
-    f = getPolynomialFitFunction(points)
-    for i in range(0, len(x), 1):
-        y_val = int(f(x[i]))
-        array.append([y_val, x[i]])
-    
-    lenght = 0.0
-    for i in range(0, len(array) - 1):
-        coord = array[i]
-        coord2 = array[i+1]
-        x_lenght = 0.0
-        y_lenght = 0.0
+    arr.append([x+1, y])
+    arr.append([x-1, y])
+    arr.append([x, y+1])
+    arr.append([x, y-1])
+    arr.append([x+1, y+1])
+    arr.append([x+1, y-1])
+    arr.append([x-1, y-1])
+    arr.append([x-1, y+1])
 
-        for x in range(coord[0], coord2[0]):
-            pass
+    for coord in arr:
+        if IsPointInTheArray(coords, coord) == True and exception != coord and IsPointInTheArray(duplicated, coord) == False:
+            neighbours.append(coord)
+    return neighbours
 
-        for y in range(coord[1], coord2[1]):
-            pass
+def getDuplicatedPixels(coords):
+    ''' 
+    This functions finds duplicate pixels or unnecessary pixels in given array. It doesn't broke the chain of pixels.
+    :param coords: array
+    :return: array of duplicated array
+    '''
+    duplicated = []
+    for coord in coords:
+        if IsPointInTheArray(duplicated, coord) == True:
+            continue 
+        neighbours = getNeighboursOfPixel(coords, coord, duplicated , [-1,-1])
+        if len(neighbours) > 2:
+            # print(f'neighbours of {coord}:')
+            # print(neighbours)
+            for point in neighbours:
+                r_neighbours = getNeighboursOfPixel(coords, point, duplicated, coord)
+                # print(f"r_neighbours of {point}")
+                # print(r_neighbours)
+                flag = False
+                for x in r_neighbours:
+                    if IsPointInTheArray(neighbours, x) == False:
+                        flag = True
+                if flag == False:
+                    # print("duplicated:", point)
+                    duplicated.append(point)
+                else:
+                    flag = False
+    return duplicated
 
-    img2 = cv2.imread('LenghtCalculation/samples/deneme2.png')
-    img2 = img2[485:516, 3383:3440]
-
-    array = np.array(array)
-    #array = array.sort()
-    #ret,img2 = cv2.threshold(img2,127,255,cv2.THRESH_BINARY)
-    combined_image2 = cv2.polylines(img2, [array], False, (0,0,255))
-    cv2.imshow('temp image', combined_image2)
-    cv2.waitKey(0)
-        
-
-def getLenghtPointbyPoint(points, area_matrix):
-    x = points[:,0]
-    y = points[:,1]
-
-    min_x = np.argmin(x)
-    max_x = np.argmax(x)
-    min_y = np.argmin(y)
-    max_y = np.argmax(y)
-
-    inverse_points = []
-    for i in range(0, len(x)):
-        inverse_points.append([y[i], x[i]])
-    inverse_points = np.array(inverse_points)
-
-    f = getPolynomialFitFunction(points)
-    f_inverse = getPolynomialFitFunction(inverse_points)
-
-    reverse_result = []
-    for i in range(y[max_y], y[min_y]-1, -1):
-        reverse_result.append([f_inverse(i), i])
-    reverse_result = np.array(reverse_result)
-    
-    result = []
-    for i in range(x[min_x], x[max_x]+1, 1):
-        result.append([i, f(i)])
-    result = np.array(result)
-
-    final_array = np.concatenate((result, reverse_result), axis = 0)
-
-    lenght = 0.0
-    for i in range(0, len(final_array)-1):
-        coord = final_array[i]
-        coord2 = final_array[i+1]
-
-        lenght += math.sqrt(
-            math.pow(abs(coord[0] - coord2[0]), 2)
-            +
-            math.pow(abs(coord[1] - coord2[1]), 2)
-            )
-        
-    print("getLenghtPointbyPoint:", lenght)
-    print("worst lenght:", len(points) * math.sqrt(2))
-    
-
-def getLenght(img):
-    area_matrix = createDummyPixelAreaMatrix(img)
-
-    cv2.imshow('image', img)
-    cv2.waitKey(0)
-
-    thinned_image = applyThinningAlogirthm(img)
-    cv2.imshow('image2', thinned_image)
-    cv2.waitKey(0)
-
-    coords = getCoordinates(thinned_image)
-
-    f = getPolynomialFitFunction(coords)
-
-    x = coords[:,0]
-    y = coords[:,1]
-
-    lenght = 0.0
+def createImageWithCoords(img, coords):
+    image = np.zeros([img.shape[0],img.shape[1]], dtype=np.uint8)
+    # coords = np.array(coords)
+    # print(coords)
     for coord in coords:
         x = coord[0]
         y = coord[1]
+        image[x][y] = 255
+    print(img.shape)
+    cv2.imshow("result", image)
+    cv2.waitKey(0)
 
-        lenght += math.sqrt(area_matrix[x][y])
+def getLenght(img):
+    ''' 
+    This functions calculates lenght of given image
+    :param img: image
+    '''
+    start = time.time()
+    ret,img = cv2.threshold(img,127,255,cv2.THRESH_BINARY)
 
-    # getLenghtOfPointDistance(coords, area_matrix)
-    getLenghtPointbyPoint(coords, area_matrix)
-    
-    # mooved_coords = moveThinned(img, thinned_image)
-    # combined_image = cv2.polylines(img, [mooved_coords], False, (255,0,0))
-    # cv2.imshow('combined image', combined_image)
-    # cv2.waitKey(0)
+    thinned_image = utilities.applyThinningAlogirthm(img)
 
-    # scratch = getScratchInOrder(thinned_image, [214,38])
-    
-def getPolynomialFitFunction(points):
-    # get x and y vectors
-    x = points[:,0]
-    y = points[:,1]
+    coords = utilities.getCoordinates(thinned_image)
+    old_coords =coords
+    coords = coords.tolist()
+    duplicated_coords = getDuplicatedPixels(coords)
 
-    # calculate polynomial
-    z = np.polyfit(x, y, 10)
-    f = np.poly1d(z)
+    for coord in duplicated_coords:
+        coords = deleteCoordInArray(coords, coord)
 
-    # calculate new x's and y'sq
-    x_new = np.linspace(x[0], x[-1], 3)
-    y_new = f(x_new)
+    extreme_points = getExtremePoints(coords)
+    print("Extreme Points")
+    print(extreme_points)
 
-    # plt.plot(x,y,'o', x_new, y_new)
-    # plt.xlim([x[0]-1, x[-1] + 1 ])
-    # plt.show()
+    coords_inorder = utilities.getScratchInOrder(thinned_image, extreme_points[1])
 
-    return f
+    print("min lenght:", len(coords))
+    lenght = getDistance(coords_inorder)
+    print("lenght:", lenght)
 
-def getCoordinates(img):
-    coords = np.argwhere(img == 255)
-    return coords
+    end = time.time()
+    print("execution time:", end - start)
+    createImageWithCoords(img, coords)
 
-def pixelCalculator(img):
-    pixel = cv2.countNonZero(img)
-    #print(pixel)
+    return old_coords, coords
 
-def cropImage(img):
-    start_point = (1750, 300)
-    end_point = (1900, 400)
-    thickness = 2
-    color = (255, 0, 0)
 
-    #image = cv2.rectangle(img, start_point, end_point, color, thickness)
+img = cv2.imread('LenghtCalculation/samples/snake_sample3.png')
+cv2.imshow('original image', img)
+cv2.waitKey(0)
 
-    cropped_image = img[300:400, 1750:1900]
-    return cropped_image
+coords, coords_inorder = getLenght(img)
+utilities.getLenght(img)
 
-def applyThinningAlogirthm(img):
-    thinned = cv2.ximgproc.thinning(cv2.cvtColor(img, cv2.COLOR_RGB2GRAY))
-    ret,thinned = cv2.threshold(thinned,127,255,cv2.THRESH_BINARY)
-    return thinned
+np_img = np.array(img)
 
-def moveThinned(img, thinned_img):
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    img_coords = getCoordinates(img)
-    thinned_coords = getCoordinates(thinned_img)
+for i in range(0, len(coords)):
+    coord = coords[i]
+    np_img[coord[0], coord[1]] = (255, 0,0)
 
-    y_img = img_coords[:,0]
-    x_img = img_coords[:,1]
+cv2.imshow("blue image", np_img)
+cv2.waitKey(0)
 
-    y_thin = thinned_coords[:,0]
-    x_thin = thinned_coords[:,1]
+for i in range(0, len(coords_inorder)):
+    coord = coords_inorder[i]
+    np_img[coord[0], coord[1]] = (0, 0, 255)
 
-    min_index_img = np.argmin(x_img)
-    min_index_thinned = np.argmin(x_thin)
-
-    x_img_val = x_img[min_index_img]
-    y_img_val = y_img[min_index_img]
-
-    x_thin_val = x_thin[min_index_thinned]
-    y_thin_val = y_thin[min_index_thinned]
-
-    x_differance = x_thin_val - x_img_val
-    y_differance = y_thin_val - y_img_val
-
-    edited_coords = []
-
-    for i in range(len(thinned_coords)):
-        x_thin[i] = x_thin[i] - x_differance
-        y_thin[i] = y_thin[i] - y_differance
-
-        edited_coords.append([x_thin[i], y_thin[i]])
-    
-    return np.array(edited_coords)
-
-def getScratchInOrder(thinned_image, initial_coord):
-    """
-    This functions start from initial coordinate and makes a chain of pixels array, continues until it reaches the end.
-    :param thinned_image: image
-    :param initial_coord: array
-    :return: array
-    """
-    result = []
-    result.append(initial_coord)
-    current_coord = initial_coord
-    while(True):
-        x = current_coord[0]
-        y = current_coord[1]
-        if thinned_image[x+1][y] == 255 and IsPointInTheArray(result, [x+1, y]) == False:
-            result.append([x+1, y])
-            current_coord = [x+1, y]
-            continue
-        elif thinned_image[x-1][y] == 255 and IsPointInTheArray(result, [x-1, y]) == False:
-            result.append([x-1, y])
-            current_coord = [x-1, y]
-            continue
-        elif thinned_image[x][y + 1] == 255 and IsPointInTheArray(result, [x, y+1]) == False:
-            result.append([x, y+1])
-            current_coord = [x, y+1]
-            continue
-        elif thinned_image[x][y - 1] == 255 and IsPointInTheArray(result, [x, y-1]) == False:
-            result.append([x, y-1])
-            current_coord = [x,y-1]
-            continue
-        elif thinned_image[x+1][y+1] == 255 and IsPointInTheArray(result, [x+1, y+1]) == False:
-            result.append([x+1, y+1])
-            current_coord = [x+1, y+1]
-            continue
-        elif thinned_image[x+1][y-1] == 255 and IsPointInTheArray(result, [x+1, y-1]) == False:
-            result.append([x+1, y-1])
-            current_coord = [x+1, y-1]
-            continue
-        elif thinned_image[x-1][y-1] == 255 and IsPointInTheArray(result, [x-1, y-1]) == False:
-            result.append([x-1, y-1])
-            current_coord = [x-1, y-1]
-            continue
-        elif thinned_image[x-1][y+1] == 255 and IsPointInTheArray(result, [x-1, y+1]) == False:
-            result.append([x-1, y+1])
-            current_coord = [x-1, y+1]
-            continue
-        else:
-            break
-
-    #print(result)    
-    return result
+cv2.imshow("red image", np_img)
+cv2.waitKey(0)
